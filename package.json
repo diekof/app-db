@@ -1,0 +1,19 @@
+{
+  "name": "app-db",
+  "version": "1.0.0",
+  "description": "projeto para conexao e criacao de diagrama de banco de dados",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "prisma-pull": "npx prisma db pull",
+    "prisma-generate": "npx prisma generate"
+  },
+  "author": "diego donizete correa da silva",
+  "license": "ISC",
+  "devDependencies": {
+    "prisma-dbml-generator": "^0.10.0"
+  },
+  "dependencies": {
+    "prisma-class-generator": "^0.2.7"
+  }
+}

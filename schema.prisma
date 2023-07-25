@@ -1,0 +1,172 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+generator dbml {
+  provider   = "prisma-dbml-generator"
+  output     = "./dbml"
+  outputName = "db.dbml"
+}
+
+generator prismaClassGenerator {
+  provider = "prisma-class-generator"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model almoxarifado {
+  almoxarifado_id        Int                     @id @default(autoincrement())
+  almoxarifado_nome      String                  @db.VarChar(120)
+  almoxarifado_descricao String                  @db.VarChar(500)
+  almoxarifado_ativo     Boolean
+  almoxarifado_createat  DateTime                @db.Timestamp(6)
+  almoxarifado_material  almoxarifado_material[]
+}
+
+model almoxarifado_material {
+  almoxarifado_material_id       Int                      @id @default(autoincrement())
+  almoxarifado_id                Int
+  material_id                    Int
+  almoxarifado_material_status   String                   @db.VarChar(40)
+  almoxarifado_material_lote     String?                  @db.VarChar(40)
+  almoxarifado_material_valor_un Decimal?                 @db.Decimal(17, 2)
+  almoxarifado_material_valor_to Decimal?                 @db.Decimal(17, 2)
+  almoxarifado_material_qtd      Int                      @db.SmallInt
+  almoxarifado_material_qtd_uti  Int?                     @db.SmallInt
+  almoxarifado_material_data     DateTime?                @db.Date
+  material                       material                 @relation(fields: [material_id], references: [material_id], onDelete: NoAction, onUpdate: NoAction)
+  almoxarifado                   almoxarifado             @relation(fields: [almoxarifado_id], references: [almoxarifado_id], onDelete: NoAction, onUpdate: NoAction)
+  material_movimentacao          material_movimentacao[]
+  ordem_servico_material         ordem_servico_material[]
+
+  @@index([material_id], map: "ialmoxarifado_material1")
+  @@index([almoxarifado_id], map: "ialmoxarifado_material2")
+}
+
+model cliente {
+  cliente_id            Int                     @id @default(autoincrement())
+  cliente_nome          String                  @db.VarChar(120)
+  cliente_documento     String                  @db.VarChar(40)
+  cliente_createat      DateTime                @db.Timestamp(6)
+  ordem_servico_cliente ordem_servico_cliente[]
+}
+
+model funcionario {
+  funcionario_id         Int                      @id @default(autoincrement())
+  funcionario_nome       String                   @db.VarChar(120)
+  funcionario_cargo      String                   @db.VarChar(40)
+  funcionario_ativo      Boolean
+  ordem_servico_material ordem_servico_material[]
+}
+
+model material {
+  material_id           Int                     @id @default(autoincrement())
+  material_nome         String                  @db.VarChar(120)
+  material_descricao    String                  @db.VarChar(500)
+  material_observacao   String
+  material_sku          String                  @db.VarChar(40)
+  material_ativo        Boolean
+  material_createat     DateTime                @db.Timestamp(6)
+  almoxarifado_material almoxarifado_material[]
+}
+
+model material_movimentacao {
+  material_movimentacao_id   Int                   @id @default(autoincrement())
+  almoxarifado_material_id   Int
+  material_movimentacao_tipo String                @db.VarChar(40)
+  almoxarifado_material      almoxarifado_material @relation(fields: [almoxarifado_material_id], references: [almoxarifado_material_id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([almoxarifado_material_id], map: "imaterial_movimentacao1")
+}
+
+model ordem_servico {
+  ordem_servico_id            Int                        @id @default(autoincrement())
+  ordem_servico_numero        String                     @db.VarChar(40)
+  tipo_servico_id             Int
+  ordem_servico_status        Int                        @db.SmallInt
+  ordem_servico_data_abertura DateTime                   @db.Date
+  ordem_servico_valor         Decimal                    @db.Decimal(17, 2)
+  tipo_servico                tipo_servico               @relation(fields: [tipo_servico_id], references: [tipo_servico_id], onDelete: NoAction, onUpdate: NoAction)
+  ordem_servico_anexos        ordem_servico_anexos[]
+  ordem_servico_cliente       ordem_servico_cliente[]
+  ordem_servico_fechamento    ordem_servico_fechamento[]
+  ordem_servico_material      ordem_servico_material[]
+  ordem_servico_produto       ordem_servico_produto[]
+
+  @@index([tipo_servico_id], map: "iordem_servico1")
+}
+
+model ordem_servico_anexos {
+  ordem_servico_anexo_id       Int           @id @default(autoincrement())
+  ordem_servico_id             Int
+  ordem_servico_anexo_arq      Bytes
+  ordem_servico_anexo_arq_tipo String        @db.VarChar(40)
+  ordem_servico_anexo_arq_nome String        @db.VarChar(40)
+  ordem_servico                ordem_servico @relation(fields: [ordem_servico_id], references: [ordem_servico_id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([ordem_servico_id], map: "iordem_servico_anexos1")
+}
+
+model ordem_servico_cliente {
+  ordem_servico_cliente_id Int           @id @default(autoincrement())
+  cliente_id               Int
+  ordem_servico_id         Int
+  cliente                  cliente       @relation(fields: [cliente_id], references: [cliente_id], onDelete: NoAction, onUpdate: NoAction)
+  ordem_servico            ordem_servico @relation(fields: [ordem_servico_id], references: [ordem_servico_id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([cliente_id], map: "iordem_servico_cliente1")
+  @@index([ordem_servico_id], map: "iordem_servico_cliente2")
+}
+
+model ordem_servico_fechamento {
+  ordem_servico_fechamento_id   Int           @id @default(autoincrement())
+  ordem_servico_fechamento_data DateTime      @db.Timestamp(6)
+  ordem_servico_id              Int
+  ordem_servico                 ordem_servico @relation(fields: [ordem_servico_id], references: [ordem_servico_id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([ordem_servico_id], map: "iordem_servico_fechamento1")
+}
+
+model ordem_servico_material {
+  ordem_servico_material_id     Int                    @id @default(autoincrement())
+  almoxarifado_material_id      Int?
+  ordem_servico_id              Int
+  ordem_servico_material_data   DateTime               @db.Timestamp(6)
+  ordem_servico_material_status String                 @db.VarChar(40)
+  funcionario_id                Int?
+  ordem_servico_material_valor  Decimal                @db.Decimal(17, 2)
+  almoxarifado_material_valor   Decimal                @db.Decimal(17, 2)
+  ordem_servico_material_qtd    Int                    @db.SmallInt
+  almoxarifado_material         almoxarifado_material? @relation(fields: [almoxarifado_material_id], references: [almoxarifado_material_id], onDelete: NoAction, onUpdate: NoAction)
+  ordem_servico                 ordem_servico          @relation(fields: [ordem_servico_id], references: [ordem_servico_id], onDelete: NoAction, onUpdate: NoAction)
+  funcionario                   funcionario?           @relation(fields: [funcionario_id], references: [funcionario_id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([almoxarifado_material_id], map: "iordem_servico_material1")
+  @@index([ordem_servico_id], map: "iordem_servico_material2")
+  @@index([funcionario_id], map: "iordem_servico_material3")
+}
+
+model ordem_servico_produto {
+  ordem_servico_produto          Int           @id @db.SmallInt
+  ordem_servico_id               Int
+  ordem_servico_produto_dimensao String        @db.VarChar(40)
+  ordem_servico_produto_data_con DateTime      @db.Date
+  ordem_servico_produto_traco    String        @db.VarChar(40)
+  ordem_servico_produto_resisten String        @db.VarChar(40)
+  ordem_servico_produto_laudo    Bytes
+  ordem_servico                  ordem_servico @relation(fields: [ordem_servico_id], references: [ordem_servico_id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([ordem_servico_id], map: "iordem_servico_produto1")
+}
+
+model tipo_servico {
+  tipo_servico_id        Int             @id @default(autoincrement())
+  tipo_servico_nome      String          @db.VarChar(120)
+  tipo_servico_descricao String?         @db.VarChar(500)
+  tipo_servico_ativo     Boolean
+  tipo_servico_createat  DateTime        @db.Timestamp(6)
+  ordem_servico          ordem_servico[]
+}
